@@ -7,6 +7,7 @@
 
 import SQLKit
 
+/// See `SQLRow` https://github.com/vapor/sql-kit/blob/main/Sources/SQLKit/Rows/SQLRow.swift
 extension SQLRow {
 	/// Decode an entire `Decodable` type at once, optionally applying a prefix and/or a decoding strategy
 	/// to each key of the type before looking it up in the row.
