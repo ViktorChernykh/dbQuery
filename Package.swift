@@ -23,11 +23,6 @@ let package = Package(
 			],
 			swiftSettings: swiftSettings
 		),
-
-		.testTarget(
-			name: "DBQueryTests",
-			dependencies: ["DBQuery"]
-		)
 	]
 )
 

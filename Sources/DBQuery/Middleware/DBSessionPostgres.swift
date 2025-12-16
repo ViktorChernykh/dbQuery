@@ -9,7 +9,7 @@ import SQLKit
 import Vapor
 
 /// Implementation DBSessionProtocol for Postgres database.
-public struct DBSessionPostgres: DBSessionProtocol, Sendable {
+public final class DBSessionPostgres: DBSessionProtocol, Sendable {
 
 	/// Singleton instance.
 	public static let shared: DBSessionPostgres = .init()

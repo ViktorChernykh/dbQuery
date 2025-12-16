@@ -6,7 +6,7 @@
 //
 
 /// Delegate options for DBSessionsMiddleware.
-public enum DBStorageType {
+public enum DBStorageType: Sendable {
 	case memory
 	case postgres
 	case custom(any DBSessionProtocol)
