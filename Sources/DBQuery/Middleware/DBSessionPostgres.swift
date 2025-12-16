@@ -13,7 +13,7 @@ public struct DBSessionPostgres: DBSessionProtocol, Sendable {
 
 	/// Singleton instance.
 	public static let shared: DBSessionPostgres = .init()
-	public static let encoder: JSONEncoder = .init()
+	private let encoder: JSONEncoder = .init()
 
 	// MARK: - Init
 	private init() { }
@@ -28,10 +28,10 @@ public struct DBSessionPostgres: DBSessionProtocol, Sendable {
 	///   - req: `Vapor.Request`.
 	/// - Returns: session id.
 	public func create(
-		csrf: String = Data([UInt8].random(count: 32)).base32EncodedString(),
-		data: [String: String]? = nil,
-		expires: Date = .now.addingTimeInterval(604_800), // 7 days
-		userId: UUID? = nil,
+		csrf: String,
+		data: [String: String]?,
+		expires: Date,
+		userId: UUID?,
 		on req: Request
 	) async throws -> String {
 		let session: DBSessionModel = .init(
@@ -83,50 +83,74 @@ public struct DBSessionPostgres: DBSessionProtocol, Sendable {
 			.first(decode: CSRF.self)?.csrf
 	}
 
+	/// Updates session CSRF by session ID.
+	///
+	/// - Parameter req: `Vapor.Request`.
+	/// - Returns: CSRF.
+	public func setCSRF(on req: Request) async throws -> String? {
+		guard let sessionId: String = req.cookies["session"]?.string else {
+			return nil
+		}
+		let csrf: String = Data([UInt8].random(count: 16)).base32EncodedString()
+		let sql: String = """
+		UPDATE \(sess.schema) SET
+		\(sess.csrf) = $1
+		WHERE \(sess.string) = $2;
+		"""
+		let binds: [any Encodable & Sendable] = [csrf, sessionId]
+		try await req.sql.raw(sql, binds).run()
+
+		return csrf
+	}
+
 	/// Updates the session data in the database.
 	///
 	/// - Parameters:
 	///   - data: session data.
 	///   - expires: session expires.
-	///   - userId: session userId.
 	///   - req: `Vapor.Request`.
 	public func update(
-		data: Data?,
-		expires: Date,
-		userId: UUID?,
+		data: [String: String]? = nil,
+		expires: Date? = nil,
 		on req: Request
 	) async throws {
 		guard let sessionId: String = req.cookies["session"]?.string else {
 			return
 		}
-		let sql: String = """
-		UPDATE \(sess.schema) SET
-		\(sess.data) = $1,
-		\(sess.expires) = $2,
-		\(sess.userId) = $3
-		WHERE \(sess.string) = $4;
-		"""
-		let binds: [any Encodable & Sendable] = [data, expires, userId, sessionId]
+		var fields: [String] = []
+		var binds: [any Encodable & Sendable] = []
+		var sql: String = "UPDATE \(sess.schema) SET "
+
+		if let data {
+			let encoded: Data = try encoder.encode(data)
+			binds.append(encoded)
+			fields.append("\(sess.data) = $\(binds.count)")
+		}
+		if let expires {
+			binds.append(expires)
+			fields.append("\(sess.expires) = $\(binds.count)")
+		}
+
+		guard !fields.isEmpty else {
+			return
+		}
+		sql += fields.joined(separator: ", ")
+		binds.append(sessionId)
+		sql += " WHERE \(sess.string) = $\(binds.count);"
 
 		try await req.sql.raw(sql, binds).run()
 	}
 
-	/// Updates the session data in the cache.
-	///
-	/// - Parameters:
-	///   - data: dictionary with session data.
-	///   - req: `Vapor.Request`.
-	public func update(data: [String: String]?, on req: Request) async throws {
+	public func update(userId: UUID?, on req: Vapor.Request) async throws {
 		guard let sessionId: String = req.cookies["session"]?.string else {
 			return
 		}
 		let sql: String = """
-		UPDATE \(sess.schema)
-		SET \(sess.data) = $1
+		UPDATE \(sess.schema) SET
+		\(sess.userId) = $1
 		WHERE \(sess.string) = $2;
 		"""
-		let encoded: Data = try Self.encoder.encode(data)
-		let binds: [any Encodable & Sendable] = [encoded, sessionId]
+		let binds: [any Encodable & Sendable] = [userId, sessionId]
 
 		try await req.sql.raw(sql, binds).run()
 	}

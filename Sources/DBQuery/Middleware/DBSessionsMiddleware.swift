@@ -47,33 +47,31 @@ final class DBSessionsMiddleware: AsyncMiddleware {
 		if let session: DBSessionModel = try await delegate.read(on: req), // read session
 		   session.expires > Date.now {
 			cookieValue = session.string
-			var userId: UUID? = session.userId
 
 			// Authenticate
-			if let id: UUID = userId {
+			if let id: UUID = session.userId {
 				let sql: String = "SELECT * FROM u WHERE id = $1 LIMIT 1;"
 				if let user: UserModel = try await req.sql.raw(sql, [id])
 					.first(decode: UserModel.self) {
 					req.auth.login(user)
 				} else {
-					userId = nil
+					try await delegate.update(userId: nil, on: req)
 				}
 			}
 
 			// Update session
 			try await delegate.update(
-				data: session.data,
+				data: nil,	// nil mean will not update
 				expires: expires,
-				userId: userId,
 				on: req
 			)
 
 		} else {
 			// Create a new session
 			cookieValue = try await delegate.create(
-				csrf: Data([UInt8].random(count: 32)).base32EncodedString(),
-				data: [:],
-				expires: expires,
+				csrf: Data([UInt8].random(count: 16)).base32EncodedString(),
+				data: nil,
+				expires: .now.addingTimeInterval(604_800), // 7 days
 				userId: nil,
 				on: req
 			)

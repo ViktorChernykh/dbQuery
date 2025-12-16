@@ -10,10 +10,10 @@ import Vapor
 
 /// Singleton for storage in memory.
 public final class DBSessionMemory: DBSessionProtocol {
-	/// Singleton instance
+	/// Singleton instance.
 	public static let shared: DBSessionMemory = .init()
 
-	/// Storage for sessions
+	/// Storage for sessions.
 	private let cacheBox: CacheBox = .init()
 	private let encoder: JSONEncoder = .init()
 
@@ -32,10 +32,10 @@ public final class DBSessionMemory: DBSessionProtocol {
 	///   - _: Not used, only for protocol conforms.
 	/// - Returns: session id.
 	public func create(
-		csrf: String = Data([UInt8].random(count: 32)).base32EncodedString(),
-		data: [String: String]? = nil,
-		expires: Date = Date.now.addingTimeInterval(604_800), // 7 days
-		userId: UUID? = nil,
+		csrf: String,
+		data: [String: String]?,
+		expires: Date,
+		userId: UUID?,
 		on _: Request
 	) async throws -> String {
 		let session: DBSessionModel = .init(
@@ -71,26 +71,42 @@ public final class DBSessionMemory: DBSessionProtocol {
 		return cacheBox.load(for: sessionId)?.csrf
 	}
 
+	/// Updates session CSRF by session ID.
+	///
+	/// - Parameter req: `Vapor.Request`.
+	/// - Returns: CSRF.
+	public func setCSRF(on req: Request) async throws -> String? {
+		guard let sessionId: String = req.cookies["session"]?.string else {
+			return nil
+		}
+		let csrf: String = Data([UInt8].random(count: 16)).base32EncodedString()
+		cacheBox.update(csrf: csrf, for: sessionId)
+
+		return csrf
+	}
+
 	/// Updates the session data in the cache.
 	///
 	/// - Parameters:
 	///   - data: session data.
 	///   - expires: session expires.
-	///   - userId: session userId.
 	///   - req: `Vapor.Request`.
 	public func update(
-		data: Data?,
-		expires: Date,
-		userId: UUID?,
+		data: [String: String]? = nil,
+		expires: Date? = nil,
 		on req: Request
 	) async throws {
 		guard let sessionId: String = req.cookies["session"]?.string,
 			  var session: DBSessionModel = cacheBox.load(for: sessionId) else {
 			return
 		}
-		session.data = data
-		session.expires = expires
-		session.userId = userId
+		if let data {
+			let encoded: Data = try encoder.encode(data)
+			session.data = encoded
+		}
+		if let expires {
+			session.expires = expires
+		}
 
 		cacheBox.store(session, for: sessionId)
 	}
@@ -98,19 +114,14 @@ public final class DBSessionMemory: DBSessionProtocol {
 	/// Updates the session data in the cache.
 	///
 	/// - Parameters:
-	///   - data: dictionary with session data.
+	///   - userId: user id.
 	///   - req: `Vapor.Request`.
-	public func update(data: [String: String]?, on req: Request) async throws {
+	public func update(userId: UUID?, on req: Request) async throws {
 		guard let sessionId: String = req.cookies["session"]?.string,
 			  var session: DBSessionModel = cacheBox.load(for: sessionId) else {
 			return
 		}
-		if let data {
-			session.data = try JSONEncoder().encode(data)
-		} else {
-			session.data = nil
-		}
-
+		session.userId = userId
 		cacheBox.store(session, for: sessionId)
 	}
 

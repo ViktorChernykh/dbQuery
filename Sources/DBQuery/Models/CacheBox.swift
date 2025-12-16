@@ -84,6 +84,16 @@ public final class CacheBox: @unchecked Sendable {
 		value[sessionId] = session
 	}
 
+	public func update(csrf: String, for sessionId: String) {
+		pthread_rwlock_wrlock(&lock)
+		defer { pthread_rwlock_unlock(&lock) }
+		guard var session: DBSessionModel = value[sessionId] else {
+			return
+		}
+		session.csrf = csrf
+		value[sessionId] = session
+	}
+
 	deinit {
 		// Destroy the lock to release system resources
 		let result: Int32 = pthread_rwlock_destroy(&lock)
