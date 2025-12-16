@@ -55,7 +55,8 @@ public struct DBSessionPostgres: DBSessionProtocol, Sendable {
 		}
 		let sql: String = """
 		SELECT * FROM \(sess.schema)
-		WHERE \(sess.string) = $1;
+		WHERE \(sess.string) = $1
+		LIMIT 1;
 		"""
 		let binds: [any Encodable & Sendable] = [sessionId]
 
@@ -73,7 +74,8 @@ public struct DBSessionPostgres: DBSessionProtocol, Sendable {
 		}
 		let sql: String = """
 		SELECT \(sess.csrf) FROM \(sess.schema)
-		WHERE \(sess.string) = $1;
+		WHERE \(sess.string) = $1
+		LIMIT 1;
 		"""
 		let binds: [any Encodable & Sendable] = [sessionId]
 

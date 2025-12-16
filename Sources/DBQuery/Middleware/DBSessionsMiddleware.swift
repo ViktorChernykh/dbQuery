@@ -51,7 +51,7 @@ final class DBSessionsMiddleware: AsyncMiddleware {
 
 			// Authenticate
 			if let id: UUID = userId {
-				let sql: String = "SELECT * FROM u WHERE id = $1;"
+				let sql: String = "SELECT * FROM u WHERE id = $1 LIMIT 1;"
 				if let user: UserModel = try await req.sql.raw(sql, [id])
 					.first(decode: UserModel.self) {
 					req.auth.login(user)
