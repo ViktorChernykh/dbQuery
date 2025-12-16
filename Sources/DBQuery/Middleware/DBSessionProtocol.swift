@@ -21,15 +21,15 @@ public protocol DBSessionProtocol: Sendable {
 
 	func read(on req: Request) async throws -> DBSessionModel?
 	func readCSRF(on req: Request) async throws -> String?
+	func setCSRF(on req: Request) async throws -> String?
 
 	func update(
-		data: Data?,
-		expires: Date,
-		userId: UUID?,
+		data: [String: String]?,
+		expires: Date?,
 		on req: Request
 	) async throws
 
-	func update(data: [String: String]?, on req: Request) async throws
+	func update(userId: UUID?, on req: Request) async throws
 
 	func delete(on req: Request) async throws
 	func delete(_ sessionId: String, on req: Request) async throws

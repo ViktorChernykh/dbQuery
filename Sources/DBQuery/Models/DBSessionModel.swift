@@ -12,8 +12,8 @@ import Vapor
 public typealias sess = DBSessionModel.v1
 
 public struct DBSessionModel: Codable, Sendable {
-	public static let schema = v1.schema
-	public static let alias = v1.alias
+	public static let schema: String = v1.schema
+	public static let alias: String = v1.alias
 	private static let encoder: JSONEncoder = .init()
 
 	// Generate session id.
@@ -56,7 +56,7 @@ public struct DBSessionModel: Codable, Sendable {
 
 	public let id: UUID
 	public let string: String	// session id
-	public let csrf: String
+	public var csrf: String
 	public var data: Data?
 	public var expires: Date
 	public var userId: UUID?
