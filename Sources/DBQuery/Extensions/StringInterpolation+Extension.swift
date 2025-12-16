@@ -8,7 +8,7 @@
 extension String.StringInterpolation {
 	/// `col` mean only field without table. Quote -> always.
 	public mutating func appendInterpolation(full column: Column) {
-		let string: String = "\"\(column.table)\".\"\(column.key)\""
+		let string: String = "\"\(column.table)\".\"\(column.field)\""
 		appendLiteral(string)
 	}
 

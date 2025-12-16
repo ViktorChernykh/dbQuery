@@ -10,43 +10,43 @@ import FluentKit
 /// See `SchemaBuilder`  https://github.com/vapor/fluent-kit/blob/main/Sources/FluentKit/Schema/SchemaBuilder.swift
 extension SchemaBuilder {
 	public func field(
-		_ field: Column,
+		_ column: Column,
 		_ dataType: DatabaseSchema.DataType,
 		_ constraints: DatabaseSchema.FieldConstraint...
 	) -> Self {
 		return self.field(.definition(
-			name: .key(FieldKey(stringLiteral: field.key)),
+			name: .key(FieldKey(stringLiteral: column.field)),
 			dataType: dataType,
 			constraints: constraints
 		))
 	}
 
 	@discardableResult
-	public func unique(on fields: Column..., name: String? = nil) -> Self {
+	public func unique(on columns: Column..., name: String? = nil) -> Self {
 		self.constraint(.constraint(
-			.unique(fields: fields.map { .key(FieldKey(stringLiteral: $0.key)) }),
+			.unique(fields: columns.map { .key(FieldKey(stringLiteral: $0.field)) }),
 			name: name
 		))
 	}
 
 	@discardableResult
-	public func compositeIdentifier(over fields: Column...) -> Self {
+	public func compositeIdentifier(over columns: Column...) -> Self {
 		self.constraint(.constraint(.compositeIdentifier(
-			fields.map { .key(FieldKey(stringLiteral: $0.key)) }
+			columns.map { .key(FieldKey(stringLiteral: $0.field)) }
 		), name: ""))
 	}
 
 	@discardableResult
-	public func deleteUnique(on fields: Column...) -> Self {
+	public func deleteUnique(on columns: Column...) -> Self {
 		self.schema.deleteConstraints.append(.constraint(
-			.unique(fields: fields.map { .key(FieldKey(stringLiteral: $0.key)) })
+			.unique(fields: columns.map { .key(FieldKey(stringLiteral: $0.field)) })
 		))
 		return self
 	}
 
 	@discardableResult
 	public func foreignKey(
-		_ field: Column,
+		_ column: Column,
 		references foreignSchema: String,
 		_ foreignField: Column,
 		onDelete: DatabaseSchema.ForeignKeyAction = .noAction,
@@ -55,9 +55,9 @@ extension SchemaBuilder {
 	) -> Self {
 		self.schema.createConstraints.append(.constraint(
 			.foreignKey(
-				[.key(FieldKey(stringLiteral: field.key))],
+				[.key(FieldKey(stringLiteral: column.field))],
 				foreignSchema,
-				[.key(FieldKey(stringLiteral: foreignField.key))],
+				[.key(FieldKey(stringLiteral: foreignField.field))],
 				onDelete: onDelete,
 				onUpdate: onUpdate
 			),
@@ -68,7 +68,7 @@ extension SchemaBuilder {
 
 	@discardableResult
 	public func foreignKey(
-		_ fields: [Column],
+		_ columns: [Column],
 		references foreignSchema: String,
 		_ foreignFields: [Column],
 		onDelete: DatabaseSchema.ForeignKeyAction = .noAction,
@@ -77,9 +77,9 @@ extension SchemaBuilder {
 	) -> Self {
 		self.schema.createConstraints.append(.constraint(
 			.foreignKey(
-				fields.map { .key(FieldKey(stringLiteral: $0.key)) },
+				columns.map { .key(FieldKey(stringLiteral: $0.field)) },
 				foreignSchema,
-				foreignFields.map { .key(FieldKey(stringLiteral: $0.key)) },
+				foreignFields.map { .key(FieldKey(stringLiteral: $0.field)) },
 				onDelete: onDelete,
 				onUpdate: onUpdate
 			),
@@ -90,19 +90,17 @@ extension SchemaBuilder {
 
 	@discardableResult
 	public func updateField(
-		_ field: Column,
+		_ column: Column,
 		_ dataType: DatabaseSchema.DataType
 	) -> Self {
 		self.updateField(.dataType(
-			name: .key(FieldKey(stringLiteral: field.key)),
+			name: .key(FieldKey(stringLiteral: column.field)),
 			dataType: dataType
 		))
 	}
 
 	@discardableResult
-	public func deleteField(
-		_ field: Column
-	) -> Self {
-		self.deleteField(.key(FieldKey(stringLiteral: field.key)))
+	public func deleteField(_ column: Column) -> Self {
+		self.deleteField(.key(FieldKey(stringLiteral: column.field)))
 	}
 }

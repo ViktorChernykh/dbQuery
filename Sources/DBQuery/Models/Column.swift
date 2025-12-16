@@ -7,17 +7,17 @@
 
 /// Simplified version `DBColumn`.
 public struct Column: Codable, Sendable {
-	public let key: String
+	public let field: String
 	public let table: String
 
-	public init(_ key: String, _ table: String) {
-		self.key = key
+	public init(_ field: String, _ table: String) {
+		self.field = field
 		self.table = table
 	}
 }
 
 extension Column: CustomStringConvertible {
 	public var description: String {
-		"\"\(key)\""
+		"\"\(field)\""
 	}
 }
