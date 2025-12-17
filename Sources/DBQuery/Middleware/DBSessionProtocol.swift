@@ -35,5 +35,5 @@ public protocol DBSessionProtocol: Sendable {
 	func delete(_ sessionId: String, on req: Request) async throws
 	func deleteAll(for userId: UUID, on req: Request) async throws
 	func deleteOther(_ sessionId: String, for userId: UUID, on req: Request) async throws
-	func deleteExpired(on req: Request) async throws
+	func deleteExpired(on app: Application) async throws
 }

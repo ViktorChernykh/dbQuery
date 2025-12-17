@@ -216,13 +216,13 @@ public final class DBSessionPostgres: DBSessionProtocol, Sendable {
 
 	/// Deletes all expired sessions.
 	///
-	/// - Parameter req: `Vapor.Request`.
-	public func deleteExpired(on req: Request) async throws {
+	/// - Parameter req: `Vapor.Application`.
+	public func deleteExpired(on app: Application) async throws {
 		let sql: String = """
 		DELETE FROM \(sess.schema)
 		WHERE \(sess.expires) < $1;
 		"""
 		let binds: [any Encodable & Sendable] = [Date.now]
-		try await req.sql.raw(sql, binds).run()
+		try await app.sql.raw(sql, binds).run()
 	}
 }

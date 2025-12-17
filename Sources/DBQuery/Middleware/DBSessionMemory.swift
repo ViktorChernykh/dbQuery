@@ -179,7 +179,7 @@ public final class DBSessionMemory: DBSessionProtocol {
 
 	/// Deletes all expired sessions.
 	/// - Parameter _: Not used, only for protocol conforms.
-	public func deleteExpired(on _: Request) async throws {
+	public func deleteExpired(on _: Application) async throws {
 		var sessionIds: [String] = .init()
 		let cache: [String: DBSessionModel] = cacheBox.load()
 
